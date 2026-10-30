@@ -1,0 +1,163 @@
+// Declarative deployment config consumed by the Jenkins shared pipeline.
+// Everything the pipeline needs to know (envs, S3 targets, Brickflow,
+// Airflow, scan rules, tags) lives here, so Jenkinsfile stays tiny.
+
+def config = [
+    projectName: "identity_project",
+    branchMatcher: true,
+    jenkins: [
+        BMX_Jenkins_Instance: "<ENTERPRISE_JENKINS_INSTANCE>",
+        BMX_ROLE:             "<DEPLOY_IAM_ROLE>",
+        BMX_AWS_ACCOUNT:      "<CLOUD_ACCOUNT_ID>"
+    ],
+    // Branch -> target environment mapping.
+    buildFlow: [
+        "main":                       "prod",
+        "Development":                "dev",
+        "identity_project/qa":        "qa",
+        "identity_project/uat":       "uat"
+    ],
+    // Quality gates (pytest, coverage, Scan@Source) read quality-config.yaml.
+    qma: [
+        configFile: 'quality-config.yaml',
+        sdbPath: "shared/<COMPANY>/jenkins",
+        useCandidateCheck: true
+    ],
+    sonar: [
+        BMX_Sonar_Instance:     "<ENTERPRISE_SONAR_INSTANCE>",
+        BMX_GITHUB_CREDS_ID:    "<GHE_CREDS_ID>",
+        BMX_Sonar_Scanner_Tool: "<SONAR_SCANNER_TOOL>",
+        Add_Badges: true,
+        addPRDecoration: true,
+        adminSdbPath: "shared/<COMPANY>/sonarqube"
+    ],
+    pyspark: [
+        default: [
+            sparkVersion: "3.5.4",
+            language: "python",
+            deploy: false,
+            deployTarget: "None",
+            versionEnabled: "no",
+            unitTest: "yes",
+            image: "<ARTIFACTORY_URL>/jsl/unittest:0.0.3",
+            imageArgs: " -v \${WORKSPACE}/products:\${WORKSPACE}/products --tmpfs /.config",
+            customCommands: [
+                testCommand:  "make -e VENV_DIR=\${BUILD_NUMBER} PYENV_ROOT='/.pyenv' ci-cov",
+                buildCommand: "make -e VENV_DIR=\${BUILD_NUMBER} branch_name=\${BRANCH_NAME} build"
+            ]
+        ]
+    ],
+    // Spark Python code is deployed to S3 so Databricks jobs can pull it at runtime.
+    s3Deploy: [
+        [
+            source: "spark/python/src/transforms/",
+            target: [
+                dev:  "s3://<SPARK_CODE_BUCKET>/<COMPANY>/dev/identity-project/scripts/spark/transforms/",
+                qa:   "s3://<SPARK_CODE_BUCKET>/<COMPANY>/qa/identity-project/scripts/spark/transforms/",
+                uat:  "s3://<SPARK_CODE_BUCKET>/<COMPANY>/uat/identity-project/scripts/spark/transforms/",
+                prod: "s3://<SPARK_CODE_BUCKET>/<COMPANY>/prod/identity-project/scripts/spark/transforms/",
+            ],
+            exclude: [".git/*", ".idea/*"],
+            role:            "<DEPLOY_IAM_ROLE>",
+            awsAccount:      "<CLOUD_ACCOUNT_ID>",
+            region:          "us-east-1",
+            roleSessionName: "<DEPLOY_IAM_ROLE>"
+        ]
+    ],
+    // Required tags on every provisioned resource (enforced by Tag Validation stage).
+    tags: [
+        'nike-distributionlist': 'data-engineering@example.com',
+        'nike-owner':            '<OWNER_EMAIL>',
+        'nike-application':      'identity',
+        'nike-businessappid':    '<BUSINESS_APP_ID>',
+        'nike-tagguid':          '<TAG_GUID>',
+    ],
+    // Airflow deployment target per env (MWAA / MAP cluster).
+    airflow: [
+        "dev":  [ region: "us-east-1", mapClusterName: "data-nonprod", production: false,
+                  mapClusterSDBPath: "shared/<COMPANY>/map-jenkins", oktaClientIdSDBKey: "client_id",
+                  oktaClientSecretSDBKey: "client_secret", oktaTokenUrl: "token-url", resourcesFolder: "resources" ],
+        "qa":   [ region: "us-east-1", mapClusterName: "data-nonprod", production: false,
+                  mapClusterSDBPath: "shared/<COMPANY>/map-jenkins", oktaClientIdSDBKey: "client_id",
+                  oktaClientSecretSDBKey: "client_secret", oktaTokenUrl: "token-url", resourcesFolder: "resources" ],
+        "prod": [ region: "us-east-1", mapClusterName: "data",        production: true,
+                  mapClusterSDBPath: "shared/<COMPANY>/map-jenkins", oktaClientIdSDBKey: "client_id",
+                  oktaClientSecretSDBKey: "client_secret", oktaTokenUrl: "token-url", resourcesFolder: "resources" ]
+    ],
+    // Brickflow (Databricks Asset Bundles) deploy target per env.
+    brickflow: [
+        "dev": [
+            databricks: [
+                host: "https://<DBX_WORKSPACE>",
+                service_principal: [
+                    sdb_path: "app/<COMPANY>-data/data",
+                    sdb_key:  "ServicePrincipal_<DBX_WORKSPACE>_App.Data.Developer"
+                ]
+            ],
+            project: ["identity_project"],
+            workflow: [ root: "products/identity_project", dir: "workflows" ]
+        ],
+        "qa":   [ databricks: [ host: "https://<DBX_WORKSPACE>",
+                                service_principal: [ sdb_path: "app/<COMPANY>-data/data",
+                                                     sdb_key: "ServicePrincipal_<DBX_WORKSPACE>_App.Data.Developer" ]],
+                  project: ["identity_project"],
+                  workflow: [ root: "products/identity_project", dir: "workflows" ] ],
+        "prod": [ databricks: [ host: "https://<DBX_WORKSPACE>",
+                                service_principal: [ sdb_path: "app/<COMPANY>-data/data",
+                                                     sdb_key: "ServicePrincipal_<DBX_WORKSPACE>_App.Data.DataAdmin" ]],
+                  project: ["identity_project"],
+                  workflow: [ root: "products/identity_project", dir: "workflows" ] ]
+    ],
+]
+
+// Security scan configuration consumed by the Scan@Source stage.
+def scanAtSourceConfig = [
+    scanAtSource: [
+        scans: [
+            scanOne:   [ scanTypeTag: "sca"    ],
+            scanTwo:   [ scanTypeTag: "secret" ],
+            scanThree: [ scanTypeTag: "static" ],
+            scanFour:  [ scanTypeTag: "iac"    ]
+        ],
+        branch: '',
+        waitForScanResults: true,
+        repository: '',
+        failOnError: true,
+        waitForScanResultsTimeout: 1200
+    ]
+]
+
+stage('Scan@Source') {
+    if (env.BRANCH_NAME in ['dev', 'prod', 'qa', 'main'] || env.BRANCH_NAME.startsWith('feature/')) {
+        scanAtSource(scanAtSourceConfig)
+    } else {
+        sh "echo 'Skipping Scan@Source for non-relevant branch: ${env.BRANCH_NAME}'"
+    }
+}
+
+stage('Tag Validation') {
+    node {
+        Map cloudTags = getCloudRedTags(tagGuid: config.tags['nike-tagguid'])
+        getCloudRedTags([:], cloudTags + config.tags)
+    }
+}
+
+stage('CodeDeploy') {
+    codeDeploy(config)
+}
+
+stage('Launch Awareness') {
+    node {
+        def deployEnv = config.buildFlow[env.BRANCH_NAME] ?: 'prod'
+        def channelName = 'data-platform-deploys'
+        def launchConfig = [
+            notify: [ slack: [ channel: "#${channelName}" ] ],
+            buildFlow: config.buildFlow,
+            projectName: config.projectName,
+            alwaysCheckLaunch: true
+        ]
+        catchError(buildResult: 'SUCCESS', message: 'Launch Awareness check failed - pipeline continues') {
+            launchAwareness(launchConfig)
+        }
+    }
+}

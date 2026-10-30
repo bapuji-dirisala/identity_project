@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "sca":    { "failOn": ["critical", "high"] },
+    "secret": { "failOn": ["critical", "high"] },
+    "static": { "failOn": ["critical", "high"] },
+    "iac":    { "failOn": ["critical", "high"] }
+  }
+}

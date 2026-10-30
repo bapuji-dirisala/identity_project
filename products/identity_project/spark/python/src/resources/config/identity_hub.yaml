@@ -1,0 +1,13 @@
+# Enrichment sources merged into identity_hub_dimension on each foreachBatch tick.
+# `refresh_interval` seconds throttle how often we even look at the source Delta.
+- member_bots:
+    source_table_name:                "<CATALOG>.<SCHEMA>.identity_hub_bots_deltas"
+    source_table_refresh_cadence:     "daily"
+    source_table_merge_function_name: "merge_results_bots"
+    refresh_interval:                 1800
+
+- member_timezone:
+    source_table_name:                "<CATALOG>.<SCHEMA>.identity_hub_timezone"
+    source_table_refresh_cadence:     "daily"
+    source_table_merge_function_name: "merge_results_timezone"
+    refresh_interval:                 21600

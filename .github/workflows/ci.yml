@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main, Development, qa, uat]
+  push:
+    branches: [main, Development]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: products/identity_project
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install poetry
+        run: pipx install poetry==1.8.3
+      - name: Install deps
+        run: poetry install --no-interaction --no-ansi
+      - name: Lint (black)
+        run: poetry run black --check .
+      - name: Type check (mypy)
+        run: poetry run mypy spark/python/src || true    # soft-fail during scaffold
+      - name: Unit tests + coverage
+        run: poetry run pytest --cov=spark/python/src --cov-report=xml --cov-report=term

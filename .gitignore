@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+.pytest_cache/
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# Editors / OS
+.idea
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+
+# Mypy / cache
+.mypy_cache/
+
+# Spark / Brickflow local state
+metastore_db/
+derby.log
+bundle.yml
+
+# Secrets
+*.pem
+*.key

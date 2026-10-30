@@ -1,0 +1,58 @@
+qualityConfig:
+  application:
+    name: identity_project
+    description: Member identity data product (replica skeleton)
+    owner: data-engineering
+    email: data-engineering@example.com
+    team: identity
+    costcenter: "<COSTCENTER>"
+    organization: EDAI
+    domain: identity_project
+    scmProjectKey: <YOUR_GITHUB_ORG>
+    scmRepositoryKey: identity_project
+    error_rate_alert: TBD
+    latency_alert: TBD
+    health_dashboard: TBD
+    pager_duty: TBD
+    target_availability: 99.9
+    tier: 2
+phases:
+  build:
+    - Pytest:
+        metricSource: junit
+        metricFiles:   [ spark/python/coverage.xml ]
+        reportFiles:   [ spark/python/coverage.xml ]
+        reportIndex:   spark/python/reports/html/coverage_html/index.html
+    - PyCov:
+        metricSource: cobertura
+        metricFiles:  [ spark/python/coverage.xml ]
+        reportFiles:  [ reports/html/*, reports/html/**/* ]
+        reportIndex:  spark/python/reports/html/coverage_html/index.html
+    - ScanAtSourceStatic:
+        qualityGate: true
+        required: true
+        metricSource: scanatsource
+        metricFile:   reports/scanatsource/static-scanAtSourceScanResults.json
+        reportIndex:  reports/scanatsource/static-scanAtSourceScanResults.json
+        metricRules:  scanAtSourceRules.json
+    - ScanAtSourceSca:
+        qualityGate: true
+        required: true
+        metricSource: scanatsource
+        metricFile:   reports/scanatsource/sca-scanAtSourceScanResults.json
+        reportIndex:  reports/scanatsource/sca-scanAtSourceScanResults.json
+        metricRules:  scanAtSourceRules.json
+    - ScanAtSourceSecret:
+        qualityGate: true
+        required: true
+        metricSource: scanatsource
+        metricFile:   reports/scanatsource/secret-scanAtSourceScanResults.json
+        reportIndex:  reports/scanatsource/secret-scanAtSourceScanResults.json
+        metricRules:  scanAtSourceRules.json
+    - ScanAtSourceIac:
+        qualityGate: true
+        required: true
+        metricSource: scanatsource
+        metricFile:   reports/scanatsource/iac-scanAtSourceScanResults.json
+        reportIndex:  reports/scanatsource/iac-scanAtSourceScanResults.json
+        metricRules:  scanAtSourceRules.json

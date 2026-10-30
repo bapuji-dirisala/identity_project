@@ -1,0 +1,8 @@
+[main]
+product_name          = "identity_project"
+product_type          = "data-product"
+product_documentation = "See README.md for architecture, pipeline, and deployment."
+product_owners        = ["<OWNER_EMAIL>"]
+programming_languages = ["python"]
+tags                  = ["identity_project"]
+tech_solution_id      = "<TECH_SOLUTION_ID>"

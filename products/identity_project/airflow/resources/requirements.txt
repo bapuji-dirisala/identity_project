@@ -1,0 +1,3 @@
+# Airflow-level pip deps (installed on the Airflow workers that run these DAGs)
+apache-airflow-providers-databricks==6.*
+pyyaml

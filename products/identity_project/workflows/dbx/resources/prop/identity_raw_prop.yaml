@@ -1,0 +1,25 @@
+custom_tags: &custom_tags
+    nike-domain:        "technical platforms"
+    workspace:          "<DBX_WORKSPACE>"
+    nike-application:   "data"
+    nike-department:    "platform eng - analytics platform"
+    nike-division:      "global technology"
+    nike-squad:         "data"
+    nike-techsolution:  "<TECH_SOLUTION_ID>"
+    nike-initiative:    "identity"
+
+identity_raw:
+  <<: *custom_tags
+  custom_tags:        *custom_tags
+  name:               "identity_raw"
+  notebook_path:      "spark/python/src/identity_raw"
+  spark_version:      "16.4.x-scala2.13"
+  policy_id:          "<DBX_CLUSTER_POLICY_ID>"
+  runtime_engine:     "standard"
+  node_type_id:       "m7gd.2xlarge"
+  driver_node_type_id:"m7gd.2xlarge"
+  min_workers:        1
+  max_workers:        5
+  max_retries:        0
+  aws_attributes:
+    availability: "ON_DEMAND"

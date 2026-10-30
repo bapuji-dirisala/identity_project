@@ -1,0 +1,36 @@
+# Shared Brickflow / Databricks config, mixed into every job's prop file.
+product_id: "identity_project"
+nike-techsolution: "<TECH_SOLUTION_ID>"
+prefix: "wf_"
+
+catalog_config:
+  non_prod:
+    catalog: "development"
+    schema:  "identity_foundation_secure"
+    pager_duty_var: ["data-engineering@example.com"]
+    client_secret_scope: "identity_dev"
+    client_secret_key:   "kafka.client_secret"
+  prod:
+    catalog: "non_published_domain"
+    schema:  "identity_foundation_secure"
+    pager_duty_var: ["identity-oncall@example.pagerduty.com"]
+    client_secret_scope: "identity_prod"
+    client_secret_key:   "kafka.client_secret"
+
+databricks_workspace:
+  workspace: "<DBX_WORKSPACE>"
+
+git:
+  prod: "main"
+
+access_control:
+  non_prod:
+    group:           ["App.Data.Developer", "App.Data.DataAdmin"]
+    permission_level: CAN_MANAGE
+  prod:
+    group:           ["App.Data.DataAdmin", "App.Data.Developer"]
+    permission_level: CAN_MANAGE
+
+email_recipient:
+  eng-team:
+    - data-engineering@example.com

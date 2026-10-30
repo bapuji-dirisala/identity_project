@@ -1,0 +1,5 @@
+# Registers the project roots that Brickflow should scan when deploying bundles.
+project_roots:
+  identity_project:
+    root_yaml_rel_path: products/identity_project
+version: v1
