@@ -28,10 +28,11 @@ _target_columns_cache = {}
 
 
 def get_target_columns(spark, target_table_name):
+    # Uses spark.table(...).schema so this works for any registered table (Delta,
+    # Parquet, etc.) and doesn't require the Delta runtime jars in local tests.
     if target_table_name not in _target_columns_cache:
         _target_columns_cache[target_table_name] = [
-            f.name
-            for f in DeltaTable.forName(spark, target_table_name).toDF().schema.fields
+            f.name for f in spark.table(target_table_name).schema.fields
         ]
     return _target_columns_cache[target_table_name]
 
