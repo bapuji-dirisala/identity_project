@@ -1,0 +1,3 @@
+-- Spark-Expectations rule rows for NON-PROD (dev/qa/uat).
+-- Looser thresholds than prod so test data flows through.
+-- See resources/dqrules/sql/identity_dq_rules.sql for the base rule set.

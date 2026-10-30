@@ -1,0 +1,3 @@
+-- Spark-Expectations control-table seed for the SE (Service Expectation)
+-- product, applied by the `wf_identity_project_core_se` workflow. In the real
+-- repo this seeds thousands of expectation rows per environment.
