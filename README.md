@@ -10,6 +10,13 @@
 >
 > All references to the original company have been generalized:
 > `<COMPANY>`, `<CLOUD_ACCOUNT_ID>`, `<CERBERUS_URL>`, `<DBX_WORKSPACE>` etc.
+>
+> **CI note:** the real CI/CD for this repo is **Jenkins** (`Jenkinsfile` +
+> `products/identity_project/AutoJenkinsfile`), not GitHub Actions. A sample
+> GitHub Actions workflow is parked at
+> [`.github/workflows-disabled/ci.yml`](.github/workflows-disabled/ci.yml) —
+> see the [README there](.github/workflows-disabled/README.md) for why it was
+> detached (JDK 24 vs PySpark 3.5, missing Delta jars on bare runners, etc.).
 
 ---
 
